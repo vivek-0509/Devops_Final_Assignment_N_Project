@@ -1,0 +1,31 @@
+# Pod that consumes the ConfigMap in two ways:
+#   1. envFrom  -> every key becomes an environment variable
+#   2. volume   -> every key becomes a file under /etc/app-config
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-demo
+  labels:
+    app: configmap-demo
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      command: ["sh", "-c", "echo 'ConfigMap demo pod started'; sleep 3600"]
+      envFrom:
+        - configMapRef:
+            name: yatri-app-config
+      env:
+        - name: APP_LOG_LEVEL          # single key with a custom variable name
+          valueFrom:
+            configMapKeyRef:
+              name: yatri-app-config
+              key: LOG_LEVEL
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/app-config
+          readOnly: true
+  volumes:
+    - name: config-volume
+      configMap:
+        name: yatri-app-config
