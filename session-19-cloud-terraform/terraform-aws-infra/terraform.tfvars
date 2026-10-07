@@ -1,0 +1,6 @@
+aws_region         = "us-east-1"
+project_name       = "session19"
+vpc_cidr           = "10.20.0.0/16"
+public_subnet_cidr = "10.20.1.0/24"
+instance_type      = "t3.micro"
+bucket_name        = "vivek-session19-assets-20261007-fa518d"
