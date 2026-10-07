@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calculator-api
+  labels:
+    app: calculator-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: calculator-api
+  template:
+    metadata:
+      labels:
+        app: calculator-api
+    spec:
+      containers:
+        - name: calculator-api
+          image: ghcr.io/OWNER/session16-calculator-api:__IMAGE_TAG__
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
