@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/vivek-0509/devops_final_assignment.git
+    repoURL: https://github.com/vivek-0509/Devops_Final_Assignment_N_Project.git
     targetRevision: main
     path: session-20-monitoring-observability-gitops/gitops-demo/app
   destination:
