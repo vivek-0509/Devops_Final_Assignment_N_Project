@@ -1,0 +1,45 @@
+groups:
+  - name: session20-alerts
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target {{ $labels.job }} ({{ $labels.instance }}) is down"
+          description: "Prometheus could not scrape {{ $labels.instance }} for more than 30 seconds."
+
+      - alert: HighCpuUtilization
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 80
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+          description: "CPU utilisation is above 80% for 1 minute."
+
+      - alert: HighMemoryUtilization
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 85
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory on {{ $labels.instance }}"
+          description: "Memory utilisation is above 85% for 1 minute."
+
+      - alert: ContainerHighCpu
+        expr: sum by (id) (rate(container_cpu_usage_seconds_total{id=~"^/docker/[a-f0-9]{64}$"}[1m])) * 100 > 50
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.id }} CPU > 50%"
+
+      - alert: SampleAppDown
+        expr: nginx_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Sample application is not healthy"
