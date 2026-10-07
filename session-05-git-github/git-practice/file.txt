@@ -1,0 +1,4 @@
+Line 1 - initial content
+Line 2 - modified tracked file
+main change 3
+main change 4
