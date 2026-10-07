@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DevSecOps Dashboard</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 40px; }
+    .card { background: #1e293b; border-radius: 12px; padding: 24px; max-width: 720px; margin: auto; }
+    h1 { margin-top: 0; } code { background: #334155; padding: 2px 6px; border-radius: 4px; }
+    .stage { display: inline-block; background: #22c55e; color: #052e16; padding: 4px 10px; border-radius: 999px; margin: 3px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>DevSecOps Dashboard <small>v{{ version }}</small></h1>
+    <p>Session 17 demo application by Vivek Solanki. Every change goes through:</p>
+    <div>
+      <span class="stage">Build</span><span class="stage">Unit Test</span><span class="stage">SAST</span>
+      <span class="stage">SCA</span><span class="stage">Secret Scan</span><span class="stage">Docker Build</span>
+      <span class="stage">Image Scan</span><span class="stage">Security Gate</span><span class="stage">Push</span><span class="stage">Deploy</span>
+    </div>
+    <p>API: <code>/health</code>, <code>/api/status</code>, <code>/api/greet/&lt;name&gt;</code>, <code>POST /api/add</code></p>
+  </div>
+</body>
+</html>
