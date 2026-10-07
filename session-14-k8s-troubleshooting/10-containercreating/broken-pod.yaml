@@ -1,0 +1,16 @@
+# Stuck in ContainerCreating: the Pod mounts a ConfigMap that does not exist
+apiVersion: v1
+kind: Pod
+metadata:
+  name: creating-demo
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.27
+      volumeMounts:
+        - name: cfg
+          mountPath: /etc/app
+  volumes:
+    - name: cfg
+      configMap:
+        name: app-settings        # <-- this ConfigMap was never created
