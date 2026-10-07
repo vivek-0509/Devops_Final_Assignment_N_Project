@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.coverage
+# Node
+node_modules/
+dist/
+build/
+# Java
+target/
+*.class
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+# Secrets
+.env
+*.pem
+*.key
+# Helm
+*.tgz
+.act-artifacts/
