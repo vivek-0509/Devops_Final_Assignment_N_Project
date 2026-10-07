@@ -1,0 +1,22 @@
+# Apply this ONCE from your admin machine. Argo CD then watches the Git repo and keeps the cluster in sync.
+# repoURL must point to the public repo that contains the app/ folder (update after pushing this repository).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: session20-mini
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/vivek-0509/devops_final_assignment.git
+    targetRevision: main
+    path: session-20-monitoring-observability-gitops/gitops-demo/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: session20
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
