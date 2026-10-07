@@ -1,0 +1,13 @@
+# Gitleaks (secret scanning) configuration - extends the default rule set
+title = "Session 17 gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known demo/example values"
+paths = [
+  '''security/README.md''',
+  '''\.venv/''',              # local virtualenv (never committed; third-party test fixtures contain fake keys)
+  '''security/reports/''',    # scanner output, not source code
+]
