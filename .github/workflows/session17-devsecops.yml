@@ -1,0 +1,233 @@
+# Session 17 - Complete CI/CD + DevSecOps pipeline
+# Code -> Build -> Unit Test -> SAST -> SCA -> Secret Scan -> Docker Build -> Image Scan -> Security Gate -> Push -> Deploy
+name: Session 17 - DevSecOps Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "session-17-cicd-devsecops/**"
+      - ".github/workflows/session17-devsecops.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "session-17-cicd-devsecops/**"
+  workflow_dispatch:
+
+env:
+  IMAGE_TAG: ${{ github.sha || 'local' }}   # commit SHA on GitHub, 'local' when run with act
+  WORKDIR: session-17-cicd-devsecops
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/session17-devsecops
+
+defaults:
+  run:
+    working-directory: session-17-cicd-devsecops
+
+jobs:
+  build-and-test:
+    name: Build & Unit Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        if: ${{ !env.ACT }}   # act (local run) uses the runner image's Python instead
+        with:
+          python-version: "3.12"
+      - name: Python venv when running locally with act
+        if: ${{ env.ACT }}
+        run: |
+          python3 -m venv /tmp/venv && echo "/tmp/venv/bin" >> $GITHUB_PATH
+      - name: Build (install dependencies, byte-compile)
+        run: |
+          pip install -r requirements-dev.txt
+          python -m compileall -q app
+      - name: Unit tests
+        run: pytest -v --cov=app --cov-report=term-missing --junitxml=test-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: session-17-cicd-devsecops/test-results.xml
+
+  sast:
+    name: SAST (Bandit + CodeQL)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        if: ${{ !env.ACT }}   # act (local run) uses the runner image's Python instead
+        with:
+          python-version: "3.12"
+      - name: Python venv when running locally with act
+        if: ${{ env.ACT }}
+        run: |
+          python3 -m venv /tmp/venv && echo "/tmp/venv/bin" >> $GITHUB_PATH
+      - name: Bandit static analysis
+        run: |
+          pip install bandit==1.8.3
+          bandit -r app -c security/bandit.yaml -f txt -o bandit-report.txt --severity-level medium
+          cat bandit-report.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: session-17-cicd-devsecops/bandit-report.txt
+      - name: Initialize CodeQL
+        if: ${{ !env.ACT }}   # GitHub-only action, skipped under act
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+      - name: CodeQL analysis
+        if: ${{ !env.ACT }}   # GitHub-only action, skipped under act
+        uses: github/codeql-action/analyze@v3
+
+  sca:
+    name: SCA (pip-audit)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        if: ${{ !env.ACT }}   # act (local run) uses the runner image's Python instead
+        with:
+          python-version: "3.12"
+      - name: Python venv when running locally with act
+        if: ${{ env.ACT }}
+        run: |
+          python3 -m venv /tmp/venv && echo "/tmp/venv/bin" >> $GITHUB_PATH
+      - name: Dependency vulnerability scan
+        run: |
+          pip install pip-audit==2.9.0
+          pip-audit -r requirements.txt --strict --desc
+
+  secret-scan:
+    name: Secret Scanning (gitleaks)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        if: ${{ !env.ACT }}   # GitHub-only action, skipped under act
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: session-17-cicd-devsecops/security/.gitleaks.toml
+      - name: gitleaks (local act fallback, same rules)
+        if: ${{ env.ACT }}
+        working-directory: .
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 dir /repo/session-17-cicd-devsecops -c /repo/session-17-cicd-devsecops/security/.gitleaks.toml --no-banner
+
+  docker-build:
+    name: Docker Build
+    needs: [sast, sca, secret-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: |
+          docker build -t $IMAGE_NAME:${{ env.IMAGE_TAG }} .
+          docker save $IMAGE_NAME:${{ env.IMAGE_TAG }} -o image.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: session-17-cicd-devsecops/image.tar
+
+  image-scan:
+    name: Container Image Scan (Trivy)
+    needs: docker-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: session-17-cicd-devsecops
+      - run: docker load -i image.tar
+      - name: Trivy scan (fails on HIGH/CRITICAL)
+        if: ${{ !env.ACT }}   # marketplace action on GitHub
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          trivy-config: session-17-cicd-devsecops/security/trivy.yaml
+      - name: Trivy scan (local act fallback, same settings via the Trivy container)
+        if: ${{ env.ACT }}
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/security/trivy.yaml:/trivy.yaml:ro" \
+            aquasec/trivy:0.66.0 image --config /trivy.yaml --scanners vuln --format table ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+  security-gate:
+    name: Security Gate
+    needs: [sast, sca, secret-scan, image-scan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evaluate gate
+        run: ./security/security-gate.sh "${{ needs.sast.result }}" "${{ needs.sca.result }}" "${{ needs.secret-scan.result }}" "${{ needs.image-scan.result }}"
+
+  push-image:
+    name: Push Image (GHCR)
+    needs: security-gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+      - run: docker load -i image.tar
+        working-directory: .
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push
+        working-directory: .
+        run: |
+          docker tag $IMAGE_NAME:${{ env.IMAGE_TAG }} $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${{ env.IMAGE_TAG }}
+          docker push $IMAGE_NAME:latest
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: push-image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.12.0
+      - uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: session-17-cicd-devsecops
+      - name: Load image and deploy
+        run: |
+          docker load -i image.tar
+          kind load docker-image $IMAGE_NAME:${{ env.IMAGE_TAG }} --name chart-testing
+          sed -i "s|ghcr.io/OWNER/session17-devsecops:__IMAGE_TAG__|$IMAGE_NAME:${{ env.IMAGE_TAG }}|" k8s/deployment.yaml
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/session17-python --timeout=120s
+          kubectl get pods,svc
+      - name: Smoke test
+        run: |
+          kubectl port-forward service/session17-python 5001:80 &
+          sleep 5
+          curl -sf http://localhost:5001/health
+          curl -sf http://localhost:5001/api/status
