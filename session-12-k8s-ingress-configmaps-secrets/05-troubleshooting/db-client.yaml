@@ -1,0 +1,11 @@
+# Application client that connects with the password the developer THINKS is set: "secretpassword"
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-client
+spec:
+  restartPolicy: Never
+  containers:
+    - name: mysql-client
+      image: mysql:8.0
+      command: ["sh", "-c", "sleep 3600"]
