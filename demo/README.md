@@ -4,9 +4,9 @@
 
 This folder contains the final-project submission material required by SUBMISSION.md.
 
-## Presentation video (MP4)
+## Presentation video
 
-The video is hosted on Google Drive; the link is in [VIDEO.md](VIDEO.md).
+Hosted on Google Drive: [https://drive.google.com/file/d/1ZCuO_ogiOGoAachYmC2TyHcqUrpTXsXh/view?usp=sharing](https://drive.google.com/file/d/1ZCuO_ogiOGoAachYmC2TyHcqUrpTXsXh/view?usp=sharing) (also in [VIDEO.md](VIDEO.md)).
 
 The video walks through the TaskBoard Lite project end to end: the application, the Docker image, the GitHub Actions CI/CD and DevSecOps pipeline, the Terraform infrastructure on AWS, the Kubernetes/Helm deployment with ingress, HPA, probes and storage, Prometheus/Grafana monitoring, the Argo CD GitOps workflow and the troubleshooting challenge.
 
