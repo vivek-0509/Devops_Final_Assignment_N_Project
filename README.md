@@ -33,6 +33,7 @@ Hands-on homework for all 21 sessions of the DevOps course. Every session folder
 
 ```text
 .
+├── demo/                       presentation video link and slide deck (PPTX + PDF) for the final project
 ├── .github/workflows/          GitHub Actions pipelines (session16-ci-cd.yml, session17-devsecops.yml, session21-final-pipeline.yml)
 ├── session-01-02-linux/        links, adduser/useradd, journalctl, cheat-sheet practice
 ├── session-03-shell-scripting/ system_info.sh + run output
@@ -55,6 +56,10 @@ Hands-on homework for all 21 sessions of the DevOps course. Every session folder
 ├── session-20-monitoring-observability-gitops/  Prometheus/Grafana stack, alerts, Argo CD GitOps demo
 └── session-21-final-devops-project/final-devops-project/   TaskBoard Lite capstone (app, docker, kubernetes, helm, terraform, workflows, security, monitoring, gitops, troubleshooting)
 ```
+
+## Final project demo
+
+The `demo/` folder holds the presentation video link and the slide deck (`DevOps_Final_Project_Presentation.pptx` and `.pdf`) required by the final-project submission, see [demo/README.md](demo/README.md).
 
 ## How the evidence was produced
 - Every command in the READMEs was executed on my machine; the `screenshots/` folders contain terminal captures of those runs plus browser screenshots of the running applications, Prometheus, Grafana and Argo CD.
