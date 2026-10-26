@@ -6,9 +6,7 @@ This folder contains the final-project submission material required by SUBMISSIO
 
 ## Presentation video (MP4)
 
-| File | Details |
-|---|---|
-| [DevOps_Final_Project_Presentation.mp4](DevOps_Final_Project_Presentation.mp4) | 1920x1080, H.264/AAC, 14 min 04 s, slide walkthrough narrated in my voice |
+The video is hosted on Google Drive; the link is in [VIDEO.md](VIDEO.md).
 
 The video walks through the TaskBoard Lite project end to end: the application, the Docker image, the GitHub Actions CI/CD and DevSecOps pipeline, the Terraform infrastructure on AWS, the Kubernetes/Helm deployment with ingress, HPA, probes and storage, Prometheus/Grafana monitoring, the Argo CD GitOps workflow and the troubleshooting challenge.
 
